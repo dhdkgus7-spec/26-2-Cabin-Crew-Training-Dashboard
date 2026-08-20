@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>26-2차 신입 객실승무원 초기훈련 대시보드</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        airline: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col" x-data="dashboardApp()">
+
+    <!-- Top Header -->
+    <header class="bg-gradient-to-r from-slate-900 via-airline-900 to-slate-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand / Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-orange-500/20 backdrop-blur flex items-center justify-center text-orange-400 font-bold text-xl border border-orange-400/30 shadow-inner">
+                        ✈️
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-500/30 text-orange-200 border border-orange-400/30">2026년 9월 입과</span>
+                            <span class="text-xs text-slate-300 hidden sm:inline">제주항공 객실훈련팀</span>
+                        </div>
+                        <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">신입 객실승무원 초기훈련 대시보드</h1>
+                    </div>
+                </div>
+
+                <!-- Instructor Quick Badge -->
+                <div class="hidden md:flex items-center space-x-3 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 text-xs">
+                    <span class="text-orange-200 font-medium"><i class="fa-solid font-normal fa-user-shield mr-1"></i> 담임 교관:</span>
+                    <span class="font-semibold text-white">오아현 · 유재진 교관</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-slate-900/80 backdrop-blur border-t border-slate-800 px-2 sm:px-6">
+            <div class="max-w-7xl mx-auto flex space-x-1 sm:space-x-4 overflow-x-auto custom-scrollbar text-xs sm:text-sm font-medium">
+                <button @click="activeTab = 'overview'" 
+                        :class="activeTab === 'overview' ? 'border-orange-500 text-orange-400 bg-white/5 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                        class="py-3 px-3 sm:px-4 border-b-2 transition flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>종합 개요</span>
+                </button>
+                <button @click="activeTab = 'schedule'" 
+                        :class="activeTab === 'schedule' ? 'border-orange-500 text-orange-400 bg-white/5 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                        class="py-3 px-3 sm:px-4 border-b-2 transition flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>훈련 시간표</span>
+                </button>
+                <button @click="activeTab = 'facilities'" 
+                        :class="activeTab === 'facilities' ? 'border-orange-500 text-orange-400 bg-white/5 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                        class="py-3 px-3 sm:px-4 border-b-2 transition flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-building"></i>
+                    <span>학과장 및 실습실 안내</span>
+                </button>
+                <button @click="activeTab = 'instructors'" 
+                        :class="activeTab === 'instructors' ? 'border-orange-500 text-orange-400 bg-white/5 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                        class="py-3 px-3 sm:px-4 border-b-2 transition flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>담당 교관 정보</span>
+                </button>
+                <button @click="activeTab = 'notices'" 
+                        :class="activeTab === 'notices' ? 'border-orange-500 text-orange-400 bg-white/5 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                        class="py-3 px-3 sm:px-4 border-b-2 transition flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                    <span>훈련 지침 & 수칙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: OVERVIEW -->
+        <div x-show="activeTab === 'overview'" x-transition class="space-y-6">
+            
+            <!-- Welcome Banner -->
+            <div class="relative overflow-hidden bg-gradient-to-r from-airline-800 via-orange-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl">
+                <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl font-black select-none pointer-events-none">
+                    JEJU AIR
+                </div>
+                <div class="relative z-10 max-w-3xl">
+                    <span class="inline-block px-3 py-1 bg-orange-500/20 text-orange-300 text-xs font-semibold rounded-full mb-3 border border-orange-400/30">
+                        JEJU AIR CABIN CREW INITIAL TRAINING
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+                        26-2차 객실승무원 초기 훈련생 여러분의 입과를 환영합니다!
+                    </h2>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+                        안전하고 품격 있는 비행을 책임지는 최고의 제주항공 객실승무원으로 거듭나기 위한 첫걸음입니다. 시간표 및 훈련 생활 안내를 확인하여 최상의 훈련 상태를 유지해 주시기 바랍니다.
+                    </p>
+                    
+                    <!-- Quick Metrics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                            <span class="text-xs text-orange-200 block">훈련 기간</span>
+                            <span class="text-lg font-bold">2026.09.01 ~ 11.10</span>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                            <span class="text-xs text-orange-200 block">입과 인원</span>
+                            <span class="text-lg font-bold">30명</span>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                            <span class="text-xs text-orange-200 block">시간표 수록</span>
+                            <span class="text-lg font-bold">9/1 ~ 10/2 (5주)</span>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                            <span class="text-xs text-orange-200 block">담임 교관진</span>
+                            <span class="text-lg font-bold">2명 (오아현/유재진)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Cards Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Today Schedule Preview -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm col-span-1 md:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center space-x-2">
+                            <div class="p-2 bg-orange-100 text-orange-700 rounded-lg text-sm">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800">첫날 전체 훈련 일정 (9월 1일 화요일)</h3>
+                                <p class="text-xs text-slate-500">2026년 9월 1일 (1주차 1일차) - 총 8교시 전체 상세 일정</p>
+                            </div>
+                        </div>
+                        <button @click="activeTab = 'schedule'; selectedWeek = '1주차 (9/1~9/4)'; selectedDay = 'ALL'" class="text-xs text-orange-600 font-semibold hover:underline flex items-center">
+                            전체 시간표 보기 <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-orange-50/50 transition">
+                            <div class="w-24 font-semibold text-xs text-slate-500 border-r border-slate-200 mr-3 pr-2">
+                                <span class="block text-orange-700 font-bold">1교시</span>
+                                09:00 - 09:50
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-slate-800 truncate">오리엔테이션</h4>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">입과 및 생활 안내</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-orange-50/50 transition">
+                            <div class="w-24 font-semibold text-xs text-slate-500 border-r border-slate-200 mr-3 pr-2">
+                                <span class="block text-orange-700 font-bold">2교시</span>
+                                10:00 - 10:50
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-slate-800 truncate">본부장님 간담회</h4>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">환영사 및 질의응답</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-orange-50/50 transition">
+                            <div class="w-24 font-semibold text-xs text-slate-500 border-r border-slate-200 mr-3 pr-2">
+                                <span class="block text-orange-700 font-bold">3~4교시</span>
+                                11:00 - 12:50
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-slate-800 truncate">입과서약서 작성</h4>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">서약서 작성 및 학사 안내</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-orange-50/50 transition">
+                            <div class="w-24 font-semibold text-xs text-slate-500 border-r border-slate-200 mr-3 pr-2">
+                                <span class="block text-orange-700 font-bold">5교시</span>
+                                14:00 - 14:50
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-slate-800 truncate">태블릿 배포</h4>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">디바이스 수령 및 초기 설정</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-orange-50/50 transition">
+                            <div class="w-24 font-semibold text-xs text-slate-500 border-r border-slate-200 mr-3 pr-2">
+                                <span class="block text-orange-700 font-bold">6교시</span>
+                                15:00 - 15:50
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-slate-800 truncate">SNS의 이해</h4>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">소셜미디어 사용 가이드라인</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-orange-50/50 transition">
+                            <div class="w-24 font-semibold text-xs text-slate-500 border-r border-slate-200 mr-3 pr-2">
+                                <span class="block text-orange-700 font-bold">7~8교시</span>
+                                16:00 - 17:50
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-slate-800 truncate">유니폼 체촌</h4>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">유니폼 피팅 및 사이즈 측정</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructor Card Summary -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                            <div class="flex items-center space-x-2">
+                                <div class="p-2 bg-orange-100 text-orange-700 rounded-lg text-sm">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                </div>
+                                <h3 class="font-bold text-slate-800">담임 교관진 안내</h3>
+                            </div>
+                            <span class="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-medium">총 2명</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <template x-for="inst in instructors" :key="inst.name">
+                                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-bold text-sm text-slate-800" x-text="inst.name + ' 교관'"></span>
+                                            <span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded" x-text="inst.role"></span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-1" x-text="inst.phone"></p>
+                                    </div>
+                                    <a :href="'tel:' + inst.phone" class="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition">
+                                        <i class="fa-solid fa-phone text-xs"></i>
+                                    </a>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                        <button @click="activeTab = 'instructors'" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
+                            교관실 위치 및 상세 연락처 확인
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: TRAINING SCHEDULE -->
+        <div x-show="activeTab === 'schedule'" x-transition class="space-y-6">
+            
+            <!-- Controls Bar -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                <!-- Week Selector -->
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+                    <div class="flex items-center space-x-2 overflow-x-auto custom-scrollbar pb-1">
+                        <span class="text-xs font-bold text-slate-500 whitespace-nowrap">주차 선택:</span>
+                        <template x-for="w in weekList" :key="w">
+                            <button @click="selectedWeek = w; selectedDay = 'ALL'" 
+                                    :class="selectedWeek === w ? 'bg-orange-600 text-white font-bold shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                    class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition">
+                                <span x-text="w"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative w-44 sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                        <input type="text" x-model="scheduleSearch" placeholder="과목명 검색..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
+                </div>
+
+                <!-- Day Selector Tabs -->
+                <div class="flex items-center space-x-1.5 overflow-x-auto pt-1 custom-scrollbar">
+                    <span class="text-xs font-bold text-orange-800 whitespace-nowrap mr-1">
+                        <i class="fa-regular fa-calendar-days mr-1"></i>일자 선택:
+                    </span>
+                    <button @click="selectedDay = 'ALL'"
+                            :class="selectedDay === 'ALL' ? 'bg-slate-800 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="px-3 py-1 rounded-lg text-xs whitespace-nowrap transition">
+                        주간 전체 일자
+                    </button>
+                    <template x-for="dayName in availableDaysInWeek" :key="dayName">
+                        <button @click="selectedDay = dayName"
+                                :class="selectedDay === dayName ? 'bg-orange-500 text-white font-bold shadow-sm' : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-100'"
+                                class="px-3 py-1 rounded-lg text-xs whitespace-nowrap transition">
+                            <span x-text="dayName"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Schedule List / Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center">
+                        <i class="fa-regular fa-calendar-check text-orange-600 mr-2"></i>
+                        <span x-text="selectedWeek + (selectedDay !== 'ALL' ? ' - ' + selectedDay : ' 일자별 전체 훈련 시간표')"></span>
+                    </h3>
+                    <span class="text-xs text-slate-500">※ 상황에 따라 시간표가 일시 변경될 수 있습니다.</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100/70 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                <th class="p-3 pl-4">일자 / 시간</th>
+                                <th class="p-3">과목명 및 세부 주제</th>
+                                <th class="p-3 pr-4">강의실 / 실습장</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-xs">
+                            <template x-for="(item, idx) in filteredSchedules" :key="idx">
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="p-3 pl-4 whitespace-nowrap font-medium text-slate-700">
+                                        <div class="font-bold text-orange-900" x-text="item.day"></div>
+                                        <div class="text-[11px] text-slate-400" x-text="item.time"></div>
+                                    </td>
+                                    <td class="p-3">
+                                        <div class="font-bold text-slate-800" x-text="item.subject"></div>
+                                        <div class="text-[11px] text-slate-500" x-text="item.desc"></div>
+                                    </td>
+                                    <td class="p-3 pr-4 whitespace-nowrap text-slate-600 font-medium">
+                                        <i class="fa-solid fa-location-dot text-slate-400 text-[10px] mr-1"></i>
+                                        <span x-text="item.location"></span>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-if="filteredSchedules.length === 0">
+                                <tr>
+                                    <td colspan="3" class="p-8 text-center text-slate-400">
+                                        <i class="fa-solid fa-circle-exclamation text-2xl mb-2 block"></i>
+                                        선택하신 일자 또는 검색 조건에 맞는 시간표 항목이 없습니다.
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: DEPARTMENT & FACILITIES GUIDE (학과장 및 실습실 안내) -->
+        <div x-show="activeTab === 'facilities'" x-transition class="space-y-6">
+            
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-orange-950 to-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-md">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2.5 py-0.5 bg-orange-600 text-white rounded-full text-xs font-bold">부천대학교 꿈집</span>
+                    <span class="text-xs text-orange-200">층별 위치 안내</span>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-black mt-2">학과장 및 실습실 안내</h3>
+                <p class="text-xs sm:text-sm text-slate-300 mt-1">교육 및 실무 훈련이 진행되는 주요 학과장과 실습 공간의 층별 안내입니다.</p>
+            </div>
+
+            <!-- Floor Information Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- 2F Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black text-lg">
+                                    2F
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-base">2층</h4>
+                                    <span class="text-[11px] text-slate-500">교관실 및 학과장</span>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-700 font-medium">
+                            <li class="flex items-center space-x-2 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                <i class="fa-solid fa-chalkboard-user text-orange-500"></i>
+                                <span class="font-bold text-slate-800">P학과장</span>
+                            </li>
+                            <li class="flex items-center space-x-2 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                <i class="fa-solid fa-user-shield text-orange-500"></i>
+                                <span class="font-bold text-slate-800">교관실</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 1F Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black text-lg">
+                                    1F
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-base">1층</h4>
+                                    <span class="text-[11px] text-slate-500">안전 실습 시설</span>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-700 font-medium">
+                            <li class="flex items-center space-x-2 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                <i class="fa-solid fa-kit-medical text-orange-500"></i>
+                                <span class="font-bold text-slate-800">항공보안응급처치실습실</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- B1 Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black text-lg">
+                                    B1
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-base">B1층</h4>
+                                    <span class="text-[11px] text-slate-500">주요 학과장 및 종합 실습실</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="px-3 py-1.5 bg-slate-100 text-slate-800 rounded-xl font-bold border border-slate-200">1학과장</span>
+                            <span class="px-3 py-1.5 bg-slate-100 text-slate-800 rounded-xl font-bold border border-slate-200">2학과장</span>
+                            <span class="px-3 py-1.5 bg-slate-100 text-slate-800 rounded-xl font-bold border border-slate-200">3학과장</span>
+                            <span class="px-3 py-1.5 bg-orange-50 text-orange-800 rounded-xl font-bold border border-orange-200">화재진압실</span>
+                            <span class="px-3 py-1.5 bg-orange-50 text-orange-800 rounded-xl font-bold border border-orange-200">MOCK-UP</span>
+                            <span class="px-3 py-1.5 bg-orange-50 text-orange-800 rounded-xl font-bold border border-orange-200">멀티실습실</span>
+                            <span class="px-3 py-1.5 bg-orange-50 text-orange-800 rounded-xl font-bold border border-orange-200">Door 실습실</span>
+                            <span class="px-3 py-1.5 bg-orange-50 text-orange-800 rounded-xl font-bold border border-orange-200">비상탈출실습실</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TAB 4: INSTRUCTOR INFORMATION -->
+        <div x-show="activeTab === 'instructors'" x-transition class="space-y-6">
+            
+            <!-- Header Info -->
+            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 bg-orange-600 text-white rounded-full text-xs font-semibold">객실훈련팀</span>
+                        <span class="text-xs text-slate-300">초기훈련 담당 교관진</span>
+                    </div>
+                    <h3 class="text-xl font-bold mt-1">담임 교관 정보 및 면담 안내</h3>
+                    <p class="text-xs text-slate-300 mt-1">훈련 관련 문의 및 학사 상담은 아래 담당 담임 교관님께 연락 바랍니다.</p>
+                </div>
+                <div class="bg-white/10 p-3 rounded-xl border border-white/10 text-xs">
+                    <span class="font-bold text-orange-300 block mb-1"><i class="fa-regular fa-clock mr-1"></i> 교관실 면담 가능 시간</span>
+                    <p class="text-slate-200">평일 08:30~09:00 또는 ADMIN시간 활용</p>
+                </div>
+            </div>
+
+            <!-- Instructor Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <template x-for="inst in instructors" :key="inst.name">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden p-6 hover:shadow-md transition">
+                        <div class="flex items-center space-x-4 border-b border-slate-100 pb-4 mb-4">
+                            <div class="w-16 h-16 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center text-orange-600 text-2xl font-bold">
+                                👩‍🏫
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h4 class="text-xl font-bold text-slate-900" x-text="inst.name + ' 교관'"></h4>
+                                    <span class="px-2.5 py-0.5 bg-orange-600 text-white text-[10px] font-bold rounded-full" x-text="inst.role"></span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1" x-text="inst.subjects"></p>
+                            </div>
+                        </div>
+
+                        <!-- Card Details Body -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-slate-400 block mb-0.5"><i class="fa-solid fa-mobile-screen mr-1"></i>휴대전화</span>
+                                <span class="font-bold text-slate-800 font-mono" x-text="inst.phone"></span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-slate-400 block mb-0.5"><i class="fa-regular fa-envelope mr-1"></i>이메일</span>
+                                <span class="font-bold text-slate-800 font-mono" x-text="inst.email"></span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-slate-400 block mb-0.5"><i class="fa-solid fa-building mr-1"></i>교관실 위치</span>
+                                <span class="font-bold text-slate-800" x-text="inst.office"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- TAB 5: NOTICES & PPT RULES -->
+        <div x-show="activeTab === 'notices'" x-transition class="space-y-6" x-data="{ noticeSubTab: 'essentials' }">
+            
+            <!-- Title Header -->
+            <div class="bg-gradient-to-r from-orange-600 to-amber-600 text-white p-6 rounded-2xl shadow-md">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2.5 py-0.5 bg-white/20 text-white rounded-full text-xs font-bold border border-white/30">제주항공 객실훈련팀</span>
+                    <span class="text-xs text-orange-100">공식 생활 가이드라인</span>
+                </div>
+                <h3 class="text-2xl font-black mt-2">제주항공 객실승무원 초기 훈련 생활 안내</h3>
+                <p class="text-xs text-orange-100 mt-1">훈련생의 품위 유지와 안전하고 효율적인 학사 운영을 위한 종합 생활 수칙입니다.</p>
+                
+                <!-- Sub Section Navigation -->
+                <div class="flex items-center space-x-2 mt-5 overflow-x-auto custom-scrollbar pb-1 text-xs">
+                    <button @click="noticeSubTab = 'essentials'"
+                            :class="noticeSubTab === 'essentials' ? 'bg-white text-orange-700 font-bold shadow' : 'bg-white/20 text-white hover:bg-white/30'"
+                            class="px-3.5 py-2 rounded-xl whitespace-nowrap transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <span>1. 훈련 기간 필수 휴대품</span>
+                    </button>
+                    <button @click="noticeSubTab = 'grooming'"
+                            :class="noticeSubTab === 'grooming' ? 'bg-white text-orange-700 font-bold shadow' : 'bg-white/20 text-white hover:bg-white/30'"
+                            class="px-3.5 py-2 rounded-xl whitespace-nowrap transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-user-check"></i>
+                        <span>2. 용모 및 복장 지침</span>
+                    </button>
+                    <button @click="noticeSubTab = 'rules'"
+                            :class="noticeSubTab === 'rules' ? 'bg-white text-orange-700 font-bold shadow' : 'bg-white/20 text-white hover:bg-white/30'"
+                            class="px-3.5 py-2 rounded-xl whitespace-nowrap transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>3. 훈련 기간 준수사항</span>
+                    </button>
+                    <button @click="noticeSubTab = 'curriculum'"
+                            :class="noticeSubTab === 'curriculum' ? 'bg-white text-orange-700 font-bold shadow' : 'bg-white/20 text-white hover:bg-white/30'"
+                            class="px-3.5 py-2 rounded-xl whitespace-nowrap transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>4. 서비스 커리큘럼 & 평가</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUB TAB 1: ESSENTIALS -->
+            <div x-show="noticeSubTab === 'essentials'" class="space-y-6">
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center space-x-3 text-amber-900 text-xs">
+                    <i class="fa-solid fa-circle-exclamation text-amber-600 text-lg"></i>
+                    <div>
+                        <strong>필수 휴대품 준수 안내:</strong> 모든 휴대품은 수업의 내용과 상관없이 매일 필수 지참해야 하며, 배터리 충전 상태를 항상 유지해 주세요.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 border-b border-slate-100 pb-3 mb-3">
+                            <div class="p-2.5 bg-sky-100 text-sky-700 rounded-xl">
+                                <i class="fa-solid fa-tablet-screen-button text-base"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">Device (기기)</h4>
+                        </div>
+                        <ul class="space-y-2 text-xs text-slate-600">
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span><strong>훈련용 PAD (교재) & 충전기</strong></span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span><strong>지급용 태블릿:</strong> 충전 상태 80% 이상 유지</span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span><strong>스마트폰:</strong> HRD APP 설치 필수</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 border-b border-slate-100 pb-3 mb-3">
+                            <div class="p-2.5 bg-rose-100 text-rose-700 rounded-xl">
+                                <i class="fa-solid fa-spray-can-sparkles text-base"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">용모 및 복장 아이템</h4>
+                        </div>
+                        <ul class="space-y-2 text-xs text-slate-600">
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>Base / 색조 메이크업용품</span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>Hair Styling & Nail 아이템</span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>여분의 스타킹 및 양말</span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span><strong>손목시계:</strong> 전자시계 충전 70% 이상</span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>훈련생 명찰</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 border-b border-slate-100 pb-3 mb-3">
+                            <div class="p-2.5 bg-amber-100 text-amber-700 rounded-xl">
+                                <i class="fa-solid fa-pen-ruler text-base"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">필기구</h4>
+                        </div>
+                        <ul class="space-y-2 text-xs text-slate-600">
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>기본 필기도구 세트</span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>수업 필기용 노트/메모지</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 border-b border-slate-100 pb-3 mb-3">
+                            <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl">
+                                <i class="fa-solid fa-shoe-prints text-base"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">스니커즈</h4>
+                        </div>
+                        <ul class="space-y-2 text-xs text-slate-600">
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>실제 근무화와 비슷한 스타일 및 색상의 스니커즈</span>
+                            </li>
+                            <li class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-check text-orange-500 mt-0.5 text-[10px]"></i>
+                                <span>훈련센터 내 항시 착용</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB TAB 2: GROOMING & DRESS CODE -->
+            <div x-show="noticeSubTab === 'grooming'" class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                    <h4 class="font-bold text-slate-800 text-base flex items-center justify-between">
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-scissors text-orange-600 mr-2"></i>
+                            1) 헤어 (Hair) 연출 가이드라인
+                        </span>
+                        <span class="text-xs text-slate-400 font-normal">※ PPT 헤어 스타일 예시 참고</span>
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="font-bold text-orange-800 block mb-1">공통 수칙</span>
+                            <p class="text-slate-600 leading-relaxed">고정력 있는 Hair Styling 제품을 사용하여 잔머리 완벽 관리. 훈련 기간 중 Style 임의 변형 불가.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="font-bold text-slate-800 block mb-1">풀은 머리 (단발/중단발)</span>
+                            <p class="text-slate-600 leading-relaxed">가장 긴 머리카락 길이 기준: 쇄골 아래 5cm 이내 연출 가능.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="font-bold text-slate-800 block mb-1">묶은 머리</span>
+                            <p class="text-slate-600 leading-relaxed">Up-style(번), 포니테일, 반묶음 스타일 연출 가능.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB TAB 3: CODE OF CONDUCT -->
+            <div x-show="noticeSubTab === 'rules'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                        <div class="flex items-center space-x-3 border-b border-slate-100 pb-3">
+                            <div class="p-2 bg-rose-100 text-rose-700 rounded-xl">
+                                <i class="fa-solid fa-clock text-base"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">시간 준수 (Time)</h4>
+                        </div>
+                        <ul class="space-y-2 text-xs text-slate-600 leading-relaxed">
+                            <li class="p-2.5 bg-rose-50 rounded-xl text-rose-900 font-semibold border border-rose-100">
+                                🚨 지각 기준: 오전 08:40 (8시 40분까지 학과장 입실 완료 必)
+                            </li>
+                            <li>• <strong>오전 08:40부터 인사 연습 시작</strong> (출퇴근 시 반드시 QR CODE 입력)</li>
+                            <li>• <strong>수업 시작:</strong> 09:00 정각 진행</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                        <div class="flex items-center space-x-3 border-b border-slate-100 pb-3">
+                            <div class="p-2 bg-indigo-100 text-indigo-700 rounded-xl">
+                                <i class="fa-solid fa-user-gear text-base"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">복무 태도 (Attitude)</h4>
+                        </div>
+                        <ul class="space-y-1.5 text-xs text-slate-600 leading-relaxed">
+                            <li>• 상호 간에는 <strong>‘님’ 호칭과 존칭어</strong> 사용</li>
+                            <li>• 전문직업인다운 바른 언행 및 인사 매너 유지</li>
+                            <li>• 훈련 시설 및 부천대학교 내 에티켓 준수</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB TAB 4: SERVICE CURRICULUM & TESTS -->
+            <div x-show="noticeSubTab === 'curriculum'" class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                    <h4 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-3 flex items-center justify-between">
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-pen-to-square text-orange-600 mr-2"></i>
+                            커리큘럼 내 주요 평가 항목 (TEST 과목)
+                        </span>
+                        <span class="text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-bold">총 8개 TEST 과목</span>
+                    </h4>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 제주항공 객실훈련팀 (Jeju Air Cabin Crew Training Team). All Rights Reserved.</p>
+            <p class="mt-1">신입 객실승무원 초기 훈련 대시보드 v1.6</p>
+        </div>
+    </footer>
+
+    <!-- Alpine JS Application Logic -->
+    <script>
+        function dashboardApp() {
+            return {
+                activeTab: 'overview',
+                selectedWeek: '1주차 (9/1~9/4)',
+                selectedDay: 'ALL',
+                scheduleSearch: '',
+
+                weekList: [
+                    '1주차 (9/1~9/4)', 
+                    '2주차 (9/7~9/11)', 
+                    '3주차 (9/14~9/18)', 
+                    '4주차 (9/21~9/25)', 
+                    '5주차 (9/28~10/2)'
+                ],
+
+                // Instructors List
+                instructors: [
+                    { 
+                        name: '오아현', 
+                        role: '담임 교관', 
+                        subjects: '초기훈련 담임', 
+                        phone: '010-3635-7784', 
+                        email: 'ahoh@jejuair.net', 
+                        office: '부천대학교 꿈집 2층' 
+                    },
+                    { 
+                        name: '유재진', 
+                        role: '담임 교관', 
+                        subjects: '초기훈련 담임', 
+                        phone: '010-7438-3248', 
+                        email: 'jjyoo@jejuair.net', 
+                        office: '부천대학교 꿈집 2층' 
+                    }
+                ],
+
+                // Schedules Master Data
+                schedules: [
+                    // --- 1주차 (9/1~9/4) ---
+                    { week: '1주차 (9/1~9/4)', day: '화 (09/01)', time: '09:00 - 09:50', subject: '오리엔테이션', desc: '1교시 | 입과 및 생활 안내', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '화 (09/01)', time: '10:00 - 10:50', subject: '본부장님 간담회', desc: '2교시 | 환영사 및 질의응답', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '화 (09/01)', time: '11:00 - 12:50', subject: '입과서약서 작성', desc: '3~4교시 | 서약서 작성 및 학사 안내', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '화 (09/01)', time: '14:00 - 14:50', subject: '태블릿 배포', desc: '5교시 | 디바이스 수령 및 초기 설정', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '화 (09/01)', time: '15:00 - 15:50', subject: 'SNS의 이해', desc: '6교시 | 소셜미디어 및 보안 가이드라인', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '화 (09/01)', time: '16:00 - 17:50', subject: '유니폼 체촌', desc: '7~8교시 | 피팅 및 유니폼 신청', location: '1학과장' },
+
+                    { week: '1주차 (9/1~9/4)', day: '수 (09/02)', time: '09:00 - 10:50', subject: 'IMAGE MAKING 1', desc: '1~2교시 | 이미지 메이킹 이론 및 연출', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '수 (09/02)', time: '11:00 - 12:50', subject: 'IMAGE MAKING 2', desc: '3~4교시 | 이미지 메이킹 실습 및 코칭', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '수 (09/02)', time: '14:00 - 15:50', subject: '인사와 표정', desc: '5~6교시 | 바른 인사 자세 및 비언어적 표정', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '수 (09/02)', time: '16:00 - 17:50', subject: '항공용어 및 비행정보 지식 습득', desc: '7~8교시 | 항공 축약어 및 비행 필수 용어', location: '1학과장' },
+
+                    { week: '1주차 (9/1~9/4)', day: '목 (09/03)', time: '09:00 - 12:50', subject: '제주항공의 조직, 운영범위 및 행정절차', desc: '1~4교시 | 사내 조직 구조 및 운항 행정', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '목 (09/03)', time: '14:00 - 15:50', subject: '항공용어 및 비행정보 지식 습득', desc: '5~6교시 | 항공 운항 비행 정보 지식', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '목 (09/03)', time: '16:00 - 17:50', subject: '법규정의 적용 및 기타 관련안내자료', desc: '7~8교시 | 항공법, 보안 법규 및 지침', location: '1학과장' },
+
+                    { week: '1주차 (9/1~9/4)', day: '금 (09/04)', time: '09:00 - 10:50', subject: '말씨와 동작', desc: '1~2교시 | 승무원 언어 표현 및 신체 동작', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '금 (09/04)', time: '11:00 - 12:50', subject: '기초 서비스 이론 및 실습 (SVC BASIC)', desc: '3~4교시 | 승무원 기본 응대 및 서비스 매너', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '금 (09/04)', time: '14:00 - 16:50', subject: '서비스 마인드', desc: '5~7교시 | 고객 중심 서비스 마인드 함양', location: '1학과장' },
+                    { week: '1주차 (9/1~9/4)', day: '금 (09/04)', time: '17:00 - 17:50', subject: 'ADMIN', desc: '8교시 | 주간 피드백 및 학사 관리', location: '1학과장' },
+
+                    // --- 2주차 (9/7~9/11) ---
+                    { week: '2주차 (9/7~9/11)', day: '월 (09/07)', time: '09:00 - 09:50', subject: '용모와 복장 1', desc: '1교시 | 용모 규정 점검 및 어피어런스 가이드', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '월 (09/07)', time: '10:00 - 12:50', subject: '국제선 승객응대 화법 (대양주)', desc: '2~4교시 | 대양주 노선 특화 멘트 및 화법', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '월 (09/07)', time: '14:00 - 15:50', subject: '기내서비스 용어', desc: '5~6교시 | 기내 전문 용어 및 서빙 언어', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '월 (09/07)', time: '16:00 - 17:50', subject: '기본응대화법 (실습)', desc: '7~8교시 | 상황별 승객 응대 모의 실습', location: '1학과장' },
+
+                    { week: '2주차 (9/7~9/11)', day: '화 (09/08)', time: '09:00 - 09:50', subject: '다정함이 살아남는다', desc: '1교시 | 제주항공 서비스 브랜드 철학', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '화 (09/08)', time: '10:00 - 11:50', subject: '달라진 승객, 달라져야 할 다정함', desc: '2~3교시 | 고객 트렌드 및 유연한 서비스', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '화 (09/08)', time: '12:00 - 15:50', subject: '국내선 이론 1', desc: '4~6교시 | 국내선 노선 개요 및 기내 서비스', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '화 (09/08)', time: '16:00 - 17:50', subject: '승객 응대 롤플레이', desc: '7~8교시 | 기내 응대 시나리오 롤플레이', location: '1학과장' },
+
+                    { week: '2주차 (9/7~9/11)', day: '수 (09/09)', time: '09:00 - 09:50', subject: '국제선 승객응대 화법(대양주) TEST', desc: '1교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '수 (09/09)', time: '10:00 - 14:50', subject: '국내선 이론 2', desc: '2~5교시 | 국내선 서비스 매뉴얼 심화', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '수 (09/09)', time: '15:00 - 15:50', subject: 'J-LOG의 이해', desc: '6교시 | 기내 J-LOG 시스템 및 기록 작성', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '수 (09/09)', time: '16:00 - 17:50', subject: '국내선 에어카페 이론 1', desc: '7~8교시 | 에어카페 상품 및 세일즈 기초', location: '1학과장' },
+
+                    { week: '2주차 (9/7~9/11)', day: '목 (09/10)', time: '09:00 - 11:50', subject: '국제선 승객응대 화법 (중국)', desc: '1~3교시 | 중국 노선 특화 멘트 및 화법', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '목 (09/10)', time: '12:00 - 14:50', subject: '국내선 에어카페 이론 2', desc: '4~5교시 | 에어카페 결제 및 정산 절차', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '목 (09/10)', time: '15:00 - 15:50', subject: '판매서비스 화법 1 (국내선)', desc: '6교시 | 국내선 카트 세일즈 화법', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '목 (09/10)', time: '16:00 - 17:50', subject: '표현의 뉘앙스', desc: '7~8교시 | 상황별 어조 및 기품있는 언어 연출', location: '1학과장' },
+
+                    { week: '2주차 (9/7~9/11)', day: '금 (09/11)', time: '09:00 - 11:50', subject: '국내선 에어카페 판매 서비스', desc: '1~3교시 | 기내 실물 카트 판매 서비스', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '금 (09/11)', time: '12:00 - 15:50', subject: '국내선 FLIGHT 실습', desc: '4~6교시 | 비행 세동선 및 종합 동선 실습', location: '1학과장' },
+                    { week: '2주차 (9/7~9/11)', day: '금 (09/11)', time: '16:00 - 17:50', subject: '국내선 에어카페 실습 1-1_설렘배송', desc: '7~8교시 | 설렘배송 서비스 실습', location: '1학과장' },
+
+                    // --- 3주차 (9/14~9/18) ---
+                    { week: '3주차 (9/14~9/18)', day: '월 (09/14)', time: '09:00 - 09:50', subject: '국제선 승객응대 화법(중국) TEST', desc: '1교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '월 (09/14)', time: '10:00 - 12:50', subject: '국내선 에어카페 실습 2', desc: '2~4교시 | 기내 카트 핸들링 및 주문 처리', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '월 (09/14)', time: '14:00 - 15:50', subject: '국내선 에어카페 실습 3', desc: '5~6교시 | POS 단말기 입력 및 정산 실습', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '월 (09/14)', time: '16:00 - 17:50', subject: '국제선 승객응대 화법 (일본)', desc: '7~8교시 | 일본 노선 특화 멘트 및 화법', location: '1학과장' },
+
+                    { week: '3주차 (9/14~9/18)', day: '화 (09/15)', time: '09:00 - 09:50', subject: '용모와 복장 2', desc: '1교시 | 어피어런스 세부 재점검', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '화 (09/15)', time: '10:00 - 14:50', subject: '국내선 에어카페 실습 4', desc: '2~5교시 | 에어카페 모의 비행 통합 실습', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '화 (09/15)', time: '15:00 - 16:50', subject: '국제선 이론 1', desc: '6~7교시 | 국제선 출입국 및 서비스 개요', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '화 (09/15)', time: '17:00 - 17:50', subject: 'ADMIN', desc: '8교시 | 일간 학사 정리', location: '1학과장' },
+
+                    { week: '3주차 (9/14~9/18)', day: '수 (09/16)', time: '09:00 - 11:50', subject: '기내방송 1', desc: '1~3교시 | 기내 방송 멘트 발성 및 억양', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '수 (09/16)', time: '12:00 - 15:50', subject: '국제선 이론 2', desc: '4~6교시 | 국제선 비행 기내 서비스 실무', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '수 (09/16)', time: '16:00 - 17:50', subject: 'VOC', desc: '7~8교시 | 고객 불만 응대 및 서비스 회복', location: '1학과장' },
+
+                    { week: '3주차 (9/14~9/18)', day: '목 (09/17)', time: '09:00 - 09:50', subject: '국제선 승객응대 화법(일본) TEST', desc: '1교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '목 (09/17)', time: '10:00 - 12:50', subject: '사전기내식', desc: '2~4교시 | 사전 신청 기내식 수령 및 준비', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '목 (09/17)', time: '14:00 - 16:50', subject: '사전기내식_실습', desc: '5~7교시 | 사전기내식 딜리버리 및 서빙 실습', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '목 (09/17)', time: '17:00 - 17:50', subject: 'ADMIN', desc: '8교시 | 일간 학사 정리', location: '1학과장' },
+
+                    { week: '3주차 (9/14~9/18)', day: '금 (09/18)', time: '09:00 - 11:50', subject: 'CIQ 이론 1, 2', desc: '1~3교시 | 세관, 출입국, 검역 규정 및 양식', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '금 (09/18)', time: '12:00 - 14:50', subject: '승무원 CIQ', desc: '4~5교시 | 승무원 CIQ 신고 작성법', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '금 (09/18)', time: '15:00 - 16:50', subject: '기내방송 2', desc: '6~7교시 | 기내 방송 심화 훈련', location: '1학과장' },
+                    { week: '3주차 (9/14~9/18)', day: '금 (09/18)', time: '17:00 - 17:50', subject: 'ADMIN', desc: '8교시 | 주간 총평 및 마무리', location: '1학과장' },
+
+                    // --- 4주차 (9/21~9/25) ---
+                    { week: '4주차 (9/21~9/25)', day: '월 (09/21)', time: '09:00 - 10:50', subject: '사전기내식 TEST', desc: '1~2교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '월 (09/21)', time: '11:00 - 11:50', subject: '용모와 복장 3', desc: '3교시 | 헤어 및 용모 정밀 점검', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '월 (09/21)', time: '12:00 - 14:50', subject: '기내방송 3 (중국어)', desc: '4~5교시 | 중국어 방송 멘트 실습', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '월 (09/21)', time: '15:00 - 15:50', subject: '유니폼의 이해 1', desc: '6교시 | 유니폼 착용 규정 및 브랜드 이미지', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '월 (09/21)', time: '16:00 - 17:50', subject: '유니폼의 이해 2', desc: '7~8교시 | 유니폼 어피어런스 실습', location: '1학과장' },
+
+                    { week: '4주차 (9/21~9/25)', day: '화 (09/22)', time: '09:00 - 09:50', subject: '국내&국제선 이론 TEST', desc: '1교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '화 (09/22)', time: '10:00 - 11:50', subject: 'CIQ 롤플레이', desc: '2~3교시 | CIQ 서류 교부 및 응대 롤플레이', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '화 (09/22)', time: '12:00 - 14:50', subject: 'CIQ 실습', desc: '4~5교시 | CIQ 실물 서류 작성 실습', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '화 (09/22)', time: '15:00 - 17:50', subject: '기내 면세 이론 1 (상품의 이해)', desc: '6~8교시 | 기내 면세품 카테고리 이해', location: '1학과장' },
+
+                    { week: '4주차 (9/21~9/25)', day: '수 (09/23)', time: '09:00 - 11:50', subject: '기내 면세 이론 2 (절차)', desc: '1~3교시 | 기내 면세품 판매 및 정산 절차', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '수 (09/23)', time: '12:00 - 14:50', subject: '기내 면세 PDA', desc: '4~5교시 | 면세 결제 PDA 조작법', location: '1학과장' },
+                    { week: '4주차 (9/21~9/25)', day: '수 (09/23)', time: '15:00 - 17:50', subject: '기내 면세 실습 1_예약 주문서', desc: '6~8교시 | 예약 면세 수령 및 인도 실습', location: '1학과장' },
+
+                    { week: '4주차 (9/21~9/25)', day: '목 (09/24)', time: '09:00 - 17:50', subject: '추석 연휴', desc: '법정 휴무일', location: '-' },
+                    { week: '4주차 (9/21~9/25)', day: '금 (09/25)', time: '09:00 - 17:50', subject: '추석 연휴', desc: '법정 휴무일', location: '-' },
+
+                    // --- 5주차 (9/28~10/2) ---
+                    { week: '5주차 (9/28~10/2)', day: '월 (09/28)', time: '09:00 - 12:50', subject: 'CIQ TEST', desc: '1~4교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '월 (09/28)', time: '14:00 - 17:50', subject: '기내 면세 실습 2', desc: '5~8교시 | 면세 카트 판매 및 결제 실습', location: '1학과장' },
+
+                    { week: '5주차 (9/28~10/2)', day: '화 (09/29)', time: '09:00 - 09:50', subject: '용모와 복장 4', desc: '1교시 | 최종 용모 복장 점검', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '화 (09/29)', time: '10:00 - 14:50', subject: '기내 면세 실습 3', desc: '2~5교시 | 면세 세일즈 실전 모의 실습', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '화 (09/29)', time: '15:00 - 16:50', subject: '기내방송 4 (일본어)', desc: '6~7교시 | 일본어 방송 멘트 실습', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '화 (09/29)', time: '17:00 - 17:50', subject: 'ADMIN', desc: '8교시 | 일간 학사 정리', location: '1학과장' },
+
+                    { week: '5주차 (9/28~10/2)', day: '수 (09/30)', time: '09:00 - 10:50', subject: '국제선 에어카페 이론 1 (상품의 이해)', desc: '1~2교시 | 국제선 에어카페 상품 및 구성', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '수 (09/30)', time: '11:00 - 12:50', subject: '국제선 에어카페 이론 2', desc: '3~4교시 | 외화 결제 및 환율 정산 절차', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '수 (09/30)', time: '14:00 - 15:50', subject: '판매서비스 화법 2 (국제선)', desc: '5~6교시 | 국제선 판매 화법 실습', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '수 (09/30)', time: '16:00 - 17:50', subject: '국제선 에어카페 판매 서비스', desc: '7~8교시 | 국제선 기내 세일즈 실습', location: '1학과장' },
+
+                    { week: '5주차 (9/28~10/2)', day: '목 (10/01)', time: '09:00 - 14:50', subject: '기내 면세 TEST', desc: '1~5교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '목 (10/01)', time: '15:00 - 16:50', subject: '국제선 에어카페 실습 1', desc: '6~7교시 | 국제선 에어카페 실물 카트 실습', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '목 (10/01)', time: '17:00 - 17:50', subject: 'ADMIN', desc: '8교시 | 일간 학사 정리', location: '1학과장' },
+
+                    { week: '5주차 (9/28~10/2)', day: '금 (10/02)', time: '09:00 - 09:50', subject: '방송 TEST (터뷸런스)', desc: '1교시 | 평가 과목 (통과 기준 80점)', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '금 (10/02)', time: '10:00 - 14:50', subject: '국제선 에어카페 실습 2', desc: '2~5교시 | 국제선 에어카페 종합 실습', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '금 (10/02)', time: '15:00 - 16:50', subject: 'FUN SVC', desc: '6~7교시 | 펀 서비스 및 기내 이벤트 실습', location: '1학과장' },
+                    { week: '5주차 (9/28~10/2)', day: '금 (10/02)', time: '17:00 - 17:50', subject: 'ADMIN', desc: '8교시 | 주간 총평 및 초기 5주차 학습 마무리', location: '1학과장' }
+                ],
+
+                get availableDaysInWeek() {
+                    const days = this.schedules
+                        .filter(item => item.week === this.selectedWeek)
+                        .map(item => item.day);
+                    return [...new Set(days)];
+                },
+
+                get filteredSchedules() {
+                    return this.schedules.filter(item => {
+                        const matchWeek = item.week === this.selectedWeek;
+                        const matchDay = this.selectedDay === 'ALL' || item.day === this.selectedDay;
+                        const searchLower = this.scheduleSearch.toLowerCase();
+                        const matchSearch = !this.scheduleSearch || 
+                                            item.subject.toLowerCase().includes(searchLower) || 
+                                            item.location.toLowerCase().includes(searchLower);
+
+                        return matchWeek && matchDay && matchSearch;
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
